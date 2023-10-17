@@ -1,14 +1,18 @@
 package com.ecommerce.orderservice.service;
 
+import com.ecommerce.orderservice.dto.InventoryResponse;
 import com.ecommerce.orderservice.dto.OrderLineItemsDto;
 import com.ecommerce.orderservice.dto.OrderRequest;
 import com.ecommerce.orderservice.model.Order;
 import com.ecommerce.orderservice.model.OrderLineItems;
 import com.ecommerce.orderservice.repository.OrderRepository;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +22,9 @@ public class OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private WebClient webClient;
 
     public void placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -29,7 +36,26 @@ public class OrderService {
                 .toList();
 
         order.setOrderLineItemsList(orderLineItems);
-        orderRepository.save(order);
+
+        List<String> skuCodes = order.getOrderLineItemsList().stream().map(OrderLineItems::getSkuCode).toList();
+
+        // call inventory service to check of items are in stock
+        // .block() indicates synchronous request
+        InventoryResponse[] inventoryResponseArray = webClient.get()
+                .uri("http://localhost:8082/ecommerce/api/inventory/in-stock",
+                        uriBuilder ->uriBuilder.queryParam("sku_code", skuCodes).build())
+                .retrieve()
+                .bodyToMono(InventoryResponse[].class)
+                .block();
+
+        boolean allProductsArraysInStock = Arrays.stream(inventoryResponseArray)
+                                                    .allMatch(InventoryResponse::isInStock);
+
+        if (allProductsArraysInStock) {
+            orderRepository.save(order);
+        } else {
+            throw new IllegalArgumentException("Product not in stock. Please try again later.");
+        }
     }
 
     private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto) {
