@@ -24,7 +24,7 @@ public class OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
-    private WebClient webClient;
+    private WebClient.Builder webClientBuilder;
 
     public void placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -41,8 +41,9 @@ public class OrderService {
 
         // call inventory service to check of items are in stock
         // .block() indicates synchronous request
-        InventoryResponse[] inventoryResponseArray = webClient.get()
-                .uri("http://localhost:8082/ecommerce/api/inventory/in-stock",
+        // localhost:8082 has been replaced by the name "inventory-service" as in application.properties file, to get the port in which it runs
+        InventoryResponse[] inventoryResponseArray = webClientBuilder.build().get()
+                .uri("http://inventory-service/ecommerce/api/inventory/in-stock",
                         uriBuilder ->uriBuilder.queryParam("sku_code", skuCodes).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)

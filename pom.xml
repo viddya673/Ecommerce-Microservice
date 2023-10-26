@@ -19,6 +19,7 @@
         <module>product-service</module>
         <module>order-service</module>
         <module>inventory-service</module>
+        <module>discovery-server</module>
     </modules>
 
     <properties>
@@ -76,14 +77,14 @@
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.2.1</version>
-<!--                <configuration>-->
-<!--                    <from>-->
-<!--                        <image>eclipse-temurin:17.0.4.1_1-jre</image>-->
-<!--                    </from>-->
-<!--                    <to>-->
-<!--                        <image>microservices-tutorial/${project.artifactId}</image>-->
-<!--                    </to>-->
-<!--                </configuration>-->
+                <configuration>
+                    <from>
+                        <image>docker.io/viddyakands/ecommerce-microservices/${project.artifactId}:${project.version}</image>
+                    </from>
+                    <to>
+                        <image>ecommerce-microservices/${project.artifactId}</image>
+                    </to>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
